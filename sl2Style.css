@@ -1,0 +1,47 @@
+@import url(http://fonts.googleapis.com/earlyaccess/nanumgothic.css);
+@import url(http://fonts.googleapis.com/earlyaccess/nanumbrushscript.css);
+
+.box{
+	display: block;
+	height: 100%;
+	width: 60%;
+	/*background: linear-gradient(to bottom, #364249, #232b30);*/
+	background: linear-gradient(to bottom, #E7EAEF, #F4F4F4);
+	overflow: auto;
+}
+.light{
+  display: block;
+  height: 70px;
+  width: 70px;
+  border-radius: 50%;
+  border: 10px solid white;
+  margin: 2%;
+	float: left;
+	box-shadow: 5px 5px 5px lightgray;
+}
+h2{
+	font-family:'Nanum Brush Script', serif;
+	font-size: 3rem;
+	color: #5BD487;
+}
+h3{
+  font-family:'Nanum Brush Script', serif;
+  font-size: 2rem;
+  color: #272822;
+}
+span{
+	font-size: 1.3rem;
+	font-family: 'Nanum Gothic', serif;
+	vertical-align: 10px;
+	color:#272822;
+}
+.colortemp-btn{
+  display: block;
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+  float: left;
+  box-shadow: 5px 5px 5px lightgray;
+	background-color: #C6C6C699;
+	margin-left: 10px;
+}

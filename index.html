@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>ETRI::System Light 2.0</title>
+  <link rel="shortcut icon" href="./image/sl2-icon.png" />
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+	<link href="./sl2Style.css" type="text/css" rel="stylesheet"/>
+	<script type="text/javascript" src="http://svcapi.gigagenie.ai/sdk/v1.0/js/gigagenie.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+<script type="text/javascript">
+var apistatus=0;
+var options={};
+var ws;
+var status='NI';
+var appid;
+var containerid;
+var wsstate=0;
+var initstate=0;
+var authcode;
+function init(){
+  options={};
+  options.apikey="RTUwMDExMjF8R0JPWERFVk18MTUxNzM2Njg0MjIwNQ=="; // api key given from developer portal
+  options.keytype="GBOXDEVM"; // 개발자모드를 설정하고 사용하세요.
+        //options.keytype="GBOXCOMM"; // 개발자센터에서 승인이 되어야 사용하실 수 있>습니다.
+  gigagenie.init(options,function(result_cd,result_msg,extra){
+    if(result_cd===200){
+      status='IS';
+      console.log('Initialize Success');
+      startNineNine();
+    };
+  });
+}
+</script>
+</head>
+<body onload=init()>
+	<div class="box">
+		<div>
+			<div class="light" id="light1"></div>
+			<div class="light" id="light2"></div>
+			<div class="light" id="light3"></div>
+			<div class="light" id="light4"></div>
+			<div class="light" id="light5"></div>
+			<div class="light" id="light6"></div>
+			<div class="light" id="light7"></div>
+			<div class="light" id="light8"></div>
+		</div>
+    <div>
+      <div class="light" id="light9" href="#"></div>
+      <div class="light" id="light10" href="#"></div>
+      <div class="light" id="light11" href="#"></div>
+      <div class="light" id="light12" href="#"></div>
+      <div class="light" id="light13" href="#"></div>
+      <div class="light" id="light14" href="#"></div>
+      <div class="light" id="light15" href="#"></div>
+      <div class="light" id="light16" href="#"></div>
+    </div>
+	</div>
+	<!--text for each light-->
+	<div>
+		<h2 id="light-name">Here Comes Light name</h2>
+		<div>
+			<span>Brightness: </span>
+			<div class="slidecontainer">
+				<input type="range" min="1" max="100" value="100" class="slider" id="bri-slider">
+			</div>
+			<span>Color Temperature: </span>
+			<div>
+				<div class="colortemp-btn" id="ct2000"></div>
+				<div class="colortemp-btn" id="ct3000"></div>
+        <div class="colortemp-btn" id="ct4000"></div>
+        <div class="colortemp-btn" id="ct5000"></div>
+        <div class="colortemp-btn" id="ct6000"></div>
+			</div>
+		</div>
+	</div>
+	<script src="jquery-3.0.0.min.js"></script>
+	<script src="./sl2Js.js"></script>
+</body>
+</html>
