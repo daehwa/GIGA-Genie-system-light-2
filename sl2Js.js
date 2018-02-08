@@ -14,9 +14,12 @@ const colortemp6000 = "#fff5f5";
 const inactive_ct = "#c6c6c699";
 //System const & var
 var div = $("div")[0];
-const ip = "13.124.195.114";
-const port = "3000";
-const PATH = "/gw/v1";
+const ip = "uni18.hexa.pro";
+const port = "20398";
+const PATH = "";
+//const ip = "13.124.195.114";
+//const port = "3000";
+//const PATH = "/gw/v1";
 const BASE_URL = "http://" + ip + ":" + port + PATH;
 
 /***************
@@ -24,8 +27,10 @@ UI Control CODE
 ***************/
 //init
 function init(){
+	//getStatus(4);
   for(var i=4; i<=LIGHT_NUM; i++){
 		getStatus(i);
+		//saveData("light"+i,"off",colortemp4000+"ff",100);
   }
 }
 init();
@@ -51,28 +56,38 @@ $("div .light").mouseenter(function(){
 		$(this).css("border-color", "white");
 	})
 	.click(function(){
-		var id = $(this).attr('id');
+		turnOnOff($(this).attr('id'),null);
+	});
+function turnOnOff(id,param){
+		//var id = $(thi).attr('id');
+		var light_id = "#"+id;
 		var data = jQuery.data(div, id);
-		var onoff = data.onoff;
+		var onoff = null;
+		if(param == null)
+			onoff = data.onoff;
+		else
+			onoff = param;
 		var colortemp = data.colortemp;
 		var level = data.level;
 		
 		if(onoff == "off"){
-			$(this).css("background-color",colortemp);
-			$(this).css("opacity",level);
+			var color_code = colortemp.substring(0, 7);
+			color_code = color_code + deci2hex(level);
+			$(light_id).css("background-color",color_code);
+			//$(light_id).css("opacity",level);
 			saveData(id,"on",colortemp,level);
 			myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","on");
+			myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","level",level);
 		}
 		else{
-			$(this).css("background-color",TRANSPAERENT);
+			$(light_id).css("background-color",TRANSPAERENT);
 			var data = jQuery.data(div, id);
-			var  colortemp = data.colortemp;
+			var colortemp = data.colortemp;
 			var level = data.level;
 			saveData(id,"off",colortemp,level);
 			myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","off");
 		}
-	});
-
+}
 //Color Temp UI event
 $("div .colortemp-btn").mouseenter(function(){
 	var id = $(this).attr('id');
@@ -107,28 +122,34 @@ $("div .colortemp-btn").mouseenter(function(){
 		$(this).css("background-color",inactive_ct);
 })
 .click(function(){
+	var ct = "#"+$(this).attr('id');
+	var value = ct.substring(3,ct.length);
+	Colortemp(ct,Number(value));
+});
+function Colortemp(ct,value){
 	var id = $("#light-name").text();
 	var light_id = "#"+id;
-	var colortemp = $(this).css("background-color");
+	var colortemp = $(ct).css("background-color");
 	var color_code = rgb2hex(colortemp);
 	var data = jQuery.data(div,id);
 	var level = data.level;
 	var rgba = color_code + deci2hex(level);
 	resetCtBtn();
-	$(this).css("background-color",color_code);
+	$(ct).css("background-color",color_code);
 	$(light_id).css("background-color",rgba);
 	saveData(id,"on",color_code,level);
-	var ct = $(this).attr('id');
-	ct = ct.substring(2,ct.length);
   if(data.onoff == "off")
     myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","on");
-	myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","colortemp",Number(ct));
-});
+	myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","colortemp",value);
+}
 
 //brightness UI event
 $("#bri-slider").change(function(event,ui){
-	var level = event.currentTarget.value;
 	var id = $("#light-name").text();
+	Brightness(event,id);
+});
+function Brightness(event,id){
+	var level = event.currentTarget.value;
 	var light_id = "#"+id;
 	var data = jQuery.data(div,id);
 	var color_code = data.colortemp.substring(0, 7);
@@ -138,7 +159,7 @@ $("#bri-slider").change(function(event,ui){
 	if(data.onoff == "off")
 		myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","on");
 	myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","level",Number(level));
-});
+}
 
 function rgb2hex(rgb){
  rgb = rgb.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
@@ -208,10 +229,10 @@ function myRequest(path,method,key,value){
 		contentType: "application/json",
     beforeSend: function(jqXHR) {},
     success: function(jqXHR) {
-			console.log("Success: "+bodyString);
+			alert("Success: "+bodyString);
 		},
     error: function(jqXHR) {
-			alert("error");
+			alert("error:"+JSON.stringify(jqXHR));
 		},
     complete: function(jqXHR) {}
 	});
@@ -225,7 +246,7 @@ function getStatus(device_id){
     contentType: "application/json",
     beforeSend: function(jqXHR) {},
     success: function(jqXHR) {
-			var r = jqXHR.result_data;
+			var r = JSON.parse(jqXHR).result_data;
 			var onoff = r.onoff;
 			var colortemp = ((r.colortemp / 1000 | 0)*1000).toString();
 			switch(colortemp){

@@ -10,31 +10,21 @@
 <script src="//code.jquery.com/jquery-1.10.2.js"></script>
 <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 <script type="text/javascript">
-var apistatus=0;
-var options={};
-var ws;
-var status='NI';
-var appid;
-var containerid;
-var wsstate=0;
-var initstate=0;
-var authcode;
-function init(){
-  options={};
-  options.apikey="RTUwMDExMjF8R0JPWERFVk18MTUxNzM2Njg0MjIwNQ=="; // api key given from developer portal
-  options.keytype="GBOXDEVM"; // 개발자모드를 설정하고 사용하세요.
-        //options.keytype="GBOXCOMM"; // 개발자센터에서 승인이 되어야 사용하실 수 있>습니다.
-  gigagenie.init(options,function(result_cd,result_msg,extra){
-    if(result_cd===200){
-      status='IS';
-      console.log('Initialize Success');
-      startNineNine();
-    };
-  });
-}
+	function init(){
+		options={};
+		options.apikey="RTUwMDExMjF8R0JPWERFVk18MTUxNzM2Njg0MjIwNQ=="; // api key given from developer portal
+		options.keytype="GBOXDEVM"; // 개발자모드를 설정하고 사용하세요.
+		gigagenie.init(options,function(result_cd,result_msg,extra){
+			if(result_cd===200){
+				alert('Initialize Success');
+			};
+		});
+	}
+	init();
 </script>
 </head>
-<body onload=init()>
+<body>
+	<button id="tts-btn"></button>
 	<div class="box">
 		<div>
 			<div class="light" id="light1"></div>
@@ -77,5 +67,6 @@ function init(){
 	</div>
 	<script src="jquery-3.0.0.min.js"></script>
 	<script src="./sl2Js.js"></script>
+	<script src="./GiGA-Genie.js"></script>
 </body>
 </html>
