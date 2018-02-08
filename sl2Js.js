@@ -27,7 +27,7 @@ UI Control CODE
 ***************/
 //init
 function init(){
-	//getStatus(4);
+	//myRequest("/device/","GET",null,null);
   for(var i=4; i<=LIGHT_NUM; i++){
 		getStatus(i);
 		//saveData("light"+i,"off",colortemp4000+"ff",100);
@@ -92,23 +92,7 @@ function turnOnOff(id,param){
 $("div .colortemp-btn").mouseenter(function(){
 	var id = $(this).attr('id');
 	var ct = null;
-	switch(id){
-		case "ct2000":
-			ct=colortemp2000;
-			break;
-    case "ct3000":
-      ct=colortemp3000;
-      break;
-    case "ct4000":
-      ct=colortemp4000;
-      break;
-    case "ct5000":
-      ct=colortemp5000;
-      break;
-    case "ct6000":
-      ct=colortemp6000;
-      break;
-	}
+	ct = id2color("#"+id);
 	$(this).css("background-color",ct);
 })
 .mouseleave(function(){
@@ -124,24 +108,24 @@ $("div .colortemp-btn").mouseenter(function(){
 .click(function(){
 	var ct = "#"+$(this).attr('id');
 	var value = ct.substring(3,ct.length);
-	Colortemp(ct,Number(value));
-});
-function Colortemp(ct,value){
 	var id = $("#light-name").text();
+	Colortemp(id,ct,Number(value));
+});
+
+function Colortemp(id,ct,value){
 	var light_id = "#"+id;
-	var colortemp = $(ct).css("background-color");
-	var color_code = rgb2hex(colortemp);
+	var colortemp = id2color(ct);
 	var data = jQuery.data(div,id);
 	var level = data.level;
-	var rgba = color_code + deci2hex(level);
+	var rgba = colortemp + deci2hex(level);
 	resetCtBtn();
-	$(ct).css("background-color",color_code);
+	$(ct).css("background-color",colortemp);
 	$(light_id).css("background-color",rgba);
-	saveData(id,"on",color_code,level);
+	saveData(id,"on",colortemp,level);
   if(data.onoff == "off")
     myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","on");
 	myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","colortemp",value);
-}
+};
 
 //brightness UI event
 $("#bri-slider").change(function(event,ui){
@@ -184,7 +168,27 @@ function deci2hex(num){
 		hexString = "0" + hexString;
 	return hexString;
 }
-
+function id2color(id){
+	var ct = null;
+  switch(id){
+    case "#ct2000":
+      ct=colortemp2000;
+      break;
+    case "#ct3000":
+      ct=colortemp3000;
+      break;
+    case "#ct4000":
+      ct=colortemp4000;
+      break;
+    case "#ct5000":
+      ct=colortemp5000;
+      break;
+    case "#ct6000":
+      ct=colortemp6000;
+      break;
+  }
+	return ct;
+}
 function color2id(color){
 	var id=null;
   switch(color){
@@ -212,13 +216,16 @@ function resetCtBtn(){
 	}
 };
 
+function ListView(){
+	
+}
 
 /***************
 HTTP Method CODE
 ***************/
 
 function myRequest(path,method,key,value){
-	var response = null;
+	var response = '';
 	var bodyJson = { };
 	bodyJson[key] = value;
 	var bodyString = JSON.stringify(bodyJson);
@@ -229,16 +236,24 @@ function myRequest(path,method,key,value){
 		contentType: "application/json",
     beforeSend: function(jqXHR) {},
     success: function(jqXHR) {
-			alert("Success: "+bodyString);
+			//alert("Success: "+bodyString);
+			response += jqXHR;
+			/*if(path == "/device/"){
+				ListView(JSON.parse(response));
+			}*/
+			if(path == "/command-analysis/") operation("조명",4,"켜줘");
 		},
     error: function(jqXHR) {
 			alert("error:"+JSON.stringify(jqXHR));
 		},
-    complete: function(jqXHR) {}
+    complete: function(jqXHR) {
+		}
 	});
-	return response;
 };
 
+function approxColortemp(colortemp){
+	return ((colortemp / 1000 | 0)*1000).toString();
+}
 function getStatus(device_id){
   $.ajax({
     url:  BASE_URL + "/device/"+device_id+"/light",
@@ -248,24 +263,8 @@ function getStatus(device_id){
     success: function(jqXHR) {
 			var r = JSON.parse(jqXHR).result_data;
 			var onoff = r.onoff;
-			var colortemp = ((r.colortemp / 1000 | 0)*1000).toString();
-			switch(colortemp){
-				case "2000":
-					colortemp = colortemp2000;
-					break;
-				case "3000":
-          colortemp = colortemp3000;
-          break;
-				case "4000":
-          colortemp = colortemp4000;
-          break;
-				case "5000":
-          colortemp = colortemp5000;
-          break;
-				case "6000":
-          colortemp = colortemp6000;
-          break;
-			}
+			var colortemp = approxColortemp(r.colortemp);
+			colortemp = id2color("#ct"+colortemp);
 			var level = r.level;
 			saveData("light"+device_id,onoff,colortemp+"ff",r.level);
 			if(onoff == "on"){

@@ -4,15 +4,21 @@
 .box{
 	display: block;
 	height: 100%;
-	width: 60%;
+	width:100%;
 	/*background: linear-gradient(to bottom, #364249, #232b30);*/
 	background: linear-gradient(to bottom, #E7EAEF, #F4F4F4);
 	overflow: auto;
 }
+.container{
+  display: block;
+  height: 100%;
+  width:100%;
+  overflow: auto;
+}
 .light{
   display: block;
-  height: 70px;
-  width: 70px;
+  height: 60px;
+  width: 60px;
   border-radius: 50%;
   border: 10px solid white;
   margin: 2%;
