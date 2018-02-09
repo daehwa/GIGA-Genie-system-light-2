@@ -1,4 +1,4 @@
-/***************
+/**************
 	COLOR CODE
 ***************/
 //system color
@@ -241,7 +241,7 @@ function myRequest(path,method,key,value){
 			/*if(path == "/device/"){
 				ListView(JSON.parse(response));
 			}*/
-			if(path == "/command-analysis/") operation("조명",4,"켜줘");
+			if(path == "/command-analysis/") operation(response);
 		},
     error: function(jqXHR) {
 			alert("error:"+JSON.stringify(jqXHR));

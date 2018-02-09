@@ -1,7 +1,12 @@
-function operation(device,num,action){
+function operation(jsonText){
+	alert(jsonText);
+	var json = JSON.parse(jsonText);
+	var device = json.device;
+	var num = Number(json.num);
+	var action = json.action;
   switch(action){
-    case "꺼줘":
-    case "켜줘":
+    case "TurnOn":
+    case "TurnOff":
       handlePowerControl(device,num,action);
       break;
     case "따뜻하게":
@@ -19,11 +24,11 @@ function operation(device,num,action){
 
 function handlePowerControl(device,num,action){
 	switch(action){
-		case "켜줘":
+		case "TurnOn":
 			alert("on");
 			turnOnOff("light"+num,"off");
 			break;
-		case "꺼줘":
+		case "TurnOff":
 			alert("off");
 			turnOnOff("light"+num,"on");
 			break;

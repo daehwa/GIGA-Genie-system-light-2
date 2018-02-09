@@ -18,13 +18,12 @@ AP: {<A.*>*}            # Adjective phrase
 parser = nltk.RegexpParser(grammar)
 chunks = parser.parse(words)
 
-#for subtree in chunks.subtrees():
-#	if subtree.pprint() != None :
-#		print(subtree.pprint())
-#		break
+for subtree in chunks.subtrees():
+	if subtree.label() != 'S':
+		print(subtree)
 
 #print("# Print whole tree")
-print(chunks.pprint())
+#print(chunks.pprint())
 
 #print("\n# Print noun phrases only")
 #for subtree in chunks.subtrees():

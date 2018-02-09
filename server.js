@@ -4,8 +4,8 @@ var url = require('url');
 var express = require('express');
 var cors =  require('cors')();
 var app = express();
-var ROOT_DIR = "html/";
-
+var PythonShell = require('python-shell');
+const ROOT_DIR = "html/";
 const ip = "13.124.195.114";
 const port = "3000";
 const PATH = "/gw/v1";
@@ -32,6 +32,30 @@ app.all('*', function (req, res, next) {
 			res.writeHead(200);
 			res.end(data);
 	  });
+	}
+	else if(urlObj.pathname == "/command-analysis/"){
+    body = "";
+    res.setHeader("Content-Type", "text/html");
+    res.writeHead(200);
+    req.on('data',function(data){
+      body += data;
+    });
+    req.on('end',function(){
+			var options = {
+				args: [body]
+			};
+			PythonShell.run('./html/sl2/command-analysis.py', options, function (err, results) {
+				if (err) throw err;
+				var lang = new Array;
+				for(var i=1; i<results.length; i++){
+					var word = results[i].split("(");
+					word = word[1].split(")");
+					word = word[0].split(" ");
+					lang.push(word);
+				}
+				comprehend(lang,res);
+			});
+    });
 	}
 	else{
 		body = "";
@@ -90,3 +114,35 @@ var gwRequest= function(path,m,body,callback,res){
     }).write(bodyString);
   }
 };
+function comprehend(lang,res){
+	var action = null;
+	var device = "light";
+	var num = null;
+	for(var i=0; i<lang.length; i++){
+		words = lang[i];
+		console.log(words);
+		if(words[0]=="NP"){
+			var n = words.indexOf("번/Noun");
+			if(n>0){
+				var num = words[n-1].split("/");
+				num = num[0];
+				console.log(device + num);
+			}
+		}
+		else if(words[0]=="AP"){
+			
+		}
+		else if(words[0]=='VP'){
+			var on = "켜"+"/Verb";
+			var n = words.indexOf(on);
+			if(n>0)
+				action = "TurnOn";
+		}
+	}
+	var json = {
+			action: action,
+			device: device,
+			num: num
+		};
+	res.end(JSON.stringify(json));
+}
