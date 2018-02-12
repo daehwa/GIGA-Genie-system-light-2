@@ -5,10 +5,32 @@ var express = require('express');
 var cors =  require('cors')();
 var app = express();
 var PythonShell = require('python-shell');
+var hashmap = require('hashmap');
+
 const ROOT_DIR = "html/";
 const ip = "13.124.195.114";
 const port = "3000";
 const PATH = "/gw/v1";
+
+//namespace
+const ON = "TurnOn";
+const OFF = "TurnOff";
+const SET_BRI = "SetBrightness";
+const IN_BRI = "IncreaseBrightness";
+const DE_BRI = "DecreaseBrightness";
+const SET_CT =  "SetColortemp";
+const IN_CT =  "IncreaseColortemp";
+const DE_CT =  "DecreaseColortemp";
+var namespaces = [ON,OFF,SET_BRI,IN_BRI,DE_BRI,SET_CT,IN_CT,DE_CT];
+
+//response variables
+const CASES = 8;
+var action = null;
+var name = "";
+var device = "light";
+var num = null;
+var value = null;
+
 
 app.use(cors);
 /*app.use(function(req, res, next) {
@@ -45,15 +67,33 @@ app.all('*', function (req, res, next) {
 				args: [body]
 			};
 			PythonShell.run('./html/sl2/command-analysis.py', options, function (err, results) {
-				if (err) throw err;
-				var lang = new Array;
-				for(var i=1; i<results.length; i++){
-					var word = results[i].split("(");
-					word = word[1].split(")");
-					word = word[0].split(" ");
-					lang.push(word);
-				}
-				comprehend(lang,res);
+  			if (err) throw err;
+
+				var sen = Array();
+  			for(var i=1; i<results.length; i++){
+    			var word = results[i].split("(");
+    			word = word[1].split(")");
+    			console.log(word[0]);
+    			word = word[0].split(" ");
+    			var hash = new hashmap();
+    			hash.set("class",word[0]);
+    			for(var j=1;j<word.length;j++){
+      			var w = word[j].split("/");
+      			hash.set(w[0],w[1]);
+    			}
+    			sen.push(hash);
+  			}
+  			comprehendAction(sen);
+
+  			var json = {
+      		action: action,
+      		device: device,
+      		num: num,
+      		value: value,
+      		friendlyName: name
+    		};
+  			console.log(JSON.stringify(json));
+				res.end(JSON.stringify(json));
 			});
     });
 	}
@@ -114,35 +154,56 @@ var gwRequest= function(path,m,body,callback,res){
     }).write(bodyString);
   }
 };
-function comprehend(lang,res){
-	var action = null;
-	var device = "light";
-	var num = null;
-	for(var i=0; i<lang.length; i++){
-		words = lang[i];
-		console.log(words);
-		if(words[0]=="NP"){
-			var n = words.indexOf("번/Noun");
-			if(n>0){
-				var num = words[n-1].split("/");
-				num = num[0];
-				console.log(device + num);
-			}
-		}
-		else if(words[0]=="AP"){
-			
-		}
-		else if(words[0]=='VP'){
-			var on = "켜"+"/Verb";
-			var n = words.indexOf(on);
-			if(n>0)
-				action = "TurnOn";
-		}
-	}
-	var json = {
-			action: action,
-			device: device,
-			num: num
-		};
-	res.end(JSON.stringify(json));
+
+function comprehendAction(sen){
+  var oneHot = [0,0,0,0,0,0,0,0];
+  for(i in sen){
+    sen[i].forEach(function(value,key){
+      if(key != "class"){
+        var word_tb = require('./html/sl2/word_list/'+value+'.json');
+        var hot = word_tb[key];
+        if(hot != undefined){
+          for(var h=0;h<hot.length;h++){
+            if(hot[h]=="1") oneHot[h]++;
+          }
+        }
+      }
+    })
+  }
+  var index = oneHot.indexOf(Math.max.apply(null, oneHot)); // find highest possibility one.
+	console.log(oneHot);
+	if(index==3 || index==4)
+		value = 20;
+	else if(index==6 || index==7)
+		value = 1000;
+  action = namespaces[index];
+
+  for(i in sen){
+    getParam(sen[i].get("class"),sen[i]);
+  }
+}
+
+function getParam(word_class,lang){
+/*  switch(word_class){
+    case "NP":*/
+      handleNP(lang);
+/*      break;
+    case "VP":
+      handleVP(lang);
+      break;
+    case "AP":
+      handleAP(lang);
+      break;
+  }*/
+}
+
+function handleNP(lang){
+  var key = lang.search("Number");
+  if(key!=null){
+    if(lang.has("조명"))
+      num = key;
+    else{
+      value = key;
+    }
+  }
 }

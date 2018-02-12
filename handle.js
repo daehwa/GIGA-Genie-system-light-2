@@ -1,21 +1,25 @@
+var div = $("div")[0];
 function operation(jsonText){
 	alert(jsonText);
 	var json = JSON.parse(jsonText);
 	var device = json.device;
 	var num = Number(json.num);
 	var action = json.action;
+	var value = Number(json.value);
   switch(action){
     case "TurnOn":
     case "TurnOff":
       handlePowerControl(device,num,action);
       break;
-    case "따뜻하게":
-    case "차갑게":
-      handleColortempControl(device,num,action);
+    case "SetColortemp":
+    case "IncreaseColortemp":
+		case "DecreaseColortemp":
+      handleColortempControl(device,num,action,value);
       break;
-    case "밝게":
-    case "어둡게":
-      handleBrightnessControl(device,num,action);
+    case "SetBrightness":
+    case "IncreaseBrightness":
+		case "DecreaseBrightness":
+      handleBrightnessControl(device,num,action,value);
       break;
     default:
       alert("다시해보세요");
@@ -35,40 +39,64 @@ function handlePowerControl(device,num,action){
 	}
 };
 
-function handleColortempControl(device,num,action){
+function handleColortempControl(device,num,action,value){
+	var id = "light"+num;
+	var t = ((value / 1000) | 0) * 1000;
+	var t_id = "#ct"+t.toString();
   switch(action){
-    case "따뜻하게":
-      alert("warm");
-			var id = "light"+num;
-			Colortemp(id,"#ct3000",3000);
+		case "SetColortemp":
+			alert("set colortemperature: "+value);
+			Colortemp(id,t_id,value);
+			break;
+    case "DecreaseColortemp":
+			var data = jQuery.data(div, id);
+			var v = data.colortemp - value;
+      alert("warmer: "+v);
+			Colortemp(id,t_id,v);
       break;
-    case "차갑게":
-      alert("cool");
-      Colortemp("light"+num,"#ct6000",6000);
+    case "IncreaseColortemp":
+			var data = jQuery.data(div, id);
+			var v = data.colortemp + value;
+      alert("cooler: "+v);
+      Colortemp(id,t_id,v);
       break;
   }
 };
 
-function handleBrightnessControl(device,num,action){
+function handleBrightnessControl(device,num,action,value){
 	var e = {};
+	var id = "light"+num;
   switch(action){
-    case "밝게":
-      alert("bright");
-			e = {
-						currentTarget: {
-							value: 100
-						}
-					};
-      Brightness(e,"light"+num);
-      break;
-    case "어둡게":
-      alert("dark");
+		case "SetBrightness":
+			alert("set brightness: "+value);
       e = {
             currentTarget: {
-              value: 10
+              value: value
             }
           };
-      Brightness(e,"light"+num);
+			Brightness(e,id);
+			break;
+    case "IncreaseBrightness":
+			var data = jQuery.data(div, id);
+			var v = data.level + value;
+      alert("brighter: "+v);
+			e = {
+						currentTarget: {
+							value: v
+						}
+					};
+			Brightness(e,id);
+      break;
+    case "DecreaseBrightness":
+			var data = jQuery.data(div, id);
+			var v = data.level - value;
+      alert("darker: "+v);
+      e = {
+            currentTarget: {
+              value: v
+            }
+          };
+			Brightness(e,id);
       break;
   }
 };

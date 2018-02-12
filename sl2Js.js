@@ -30,7 +30,7 @@ function init(){
 	//myRequest("/device/","GET",null,null);
   for(var i=4; i<=LIGHT_NUM; i++){
 		getStatus(i);
-		//saveData("light"+i,"off",colortemp4000+"ff",100);
+		//saveData("light"+i,"off",colortemp4000+"ff",4000,100);
   }
 }
 init();
@@ -42,10 +42,10 @@ $("div .light").mouseenter(function(){
 		var id = $(this).attr('id');
 		var data = jQuery.data(div, id);
 		//set color temp selector
-		var colortemp = data.colortemp;
-		colortemp = colortemp.substring(0, 7);
-		var ct_id = color2id(colortemp);
-		$(ct_id).css("background-color",colortemp);
+		var colorcode = data.colorcode;
+		colorcode = colorcode.substring(0, 7);
+		var ct_id = color2id(colorcode);
+		$(ct_id).css("background-color",colorcode);
 		//set brightness slider bar
 		var level = data.level;
 		$("#bri-slider").val(level);
@@ -67,24 +67,26 @@ function turnOnOff(id,param){
 			onoff = data.onoff;
 		else
 			onoff = param;
-		var colortemp = data.colortemp;
+		var colorcode = data.colorcode;
 		var level = data.level;
 		
 		if(onoff == "off"){
-			var color_code = colortemp.substring(0, 7);
-			color_code = color_code + deci2hex(level);
-			$(light_id).css("background-color",color_code);
+			var colorcode = colorcode.substring(0, 7);
+			colorcode = colorcode + deci2hex(level);
+			$(light_id).css("background-color",colorcode);
 			//$(light_id).css("opacity",level);
-			saveData(id,"on",colortemp,level);
+			var colortemp = data.colortemp;
+			saveData(id,"on",colorcode,colortemp,level);
 			myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","on");
 			myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","level",level);
 		}
 		else{
 			$(light_id).css("background-color",TRANSPAERENT);
 			var data = jQuery.data(div, id);
+			var colorcode = data.colorcode;
 			var colortemp = data.colortemp;
 			var level = data.level;
-			saveData(id,"off",colortemp,level);
+			saveData(id,"off",colorcode,colortemp,level);
 			myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","off");
 		}
 }
@@ -114,14 +116,15 @@ $("div .colortemp-btn").mouseenter(function(){
 
 function Colortemp(id,ct,value){
 	var light_id = "#"+id;
-	var colortemp = id2color(ct);
+	var colorcode = id2color(ct);
 	var data = jQuery.data(div,id);
+	var colortemp = value;
 	var level = data.level;
-	var rgba = colortemp + deci2hex(level);
+	var rgba = colorcode + deci2hex(level);
 	resetCtBtn();
-	$(ct).css("background-color",colortemp);
+	$(ct).css("background-color",colorcode);
 	$(light_id).css("background-color",rgba);
-	saveData(id,"on",colortemp,level);
+	saveData(id,"on",colorcode,colortemp,level);
   if(data.onoff == "off")
     myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","on");
 	myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","colortemp",value);
@@ -136,10 +139,11 @@ function Brightness(event,id){
 	var level = event.currentTarget.value;
 	var light_id = "#"+id;
 	var data = jQuery.data(div,id);
-	var color_code = data.colortemp.substring(0, 7);
-	color_code = color_code + deci2hex(level);
-	$(light_id).css("background-color",color_code);
-	saveData(id,"on",color_code,level);
+	var colortemp = data.colortemp;
+	var colorcode = data.colorcode.substring(0, 7);
+	colorcode = colorcode + deci2hex(level);
+	$(light_id).css("background-color",colorcode);
+	saveData(id,"on",colorcode,colortemp,level);
 	if(data.onoff == "off")
 		myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","on");
 	myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","level",Number(level));
@@ -153,9 +157,10 @@ function rgb2hex(rgb){
   ("0" + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
 }
 
-function saveData(id,onoff,ct,level){
+function saveData(id,onoff,cc,ct,level){
   jQuery.data(div,id,{
     onoff: onoff,
+		colorcode: cc,
     colortemp: ct,
     level: level
   });
@@ -263,13 +268,14 @@ function getStatus(device_id){
     success: function(jqXHR) {
 			var r = JSON.parse(jqXHR).result_data;
 			var onoff = r.onoff;
-			var colortemp = approxColortemp(r.colortemp);
-			colortemp = id2color("#ct"+colortemp);
+			var colortemp = r.colortemp;
+			var colorcode = approxColortemp(colortemp);
+			colorcode = id2color("#ct"+colorcode);
 			var level = r.level;
-			saveData("light"+device_id,onoff,colortemp+"ff",r.level);
+			saveData("light"+device_id,onoff,colorcode+"ff",colortemp,r.level);
 			if(onoff == "on"){
-				$(this).css("background-color",colortemp);
-			  var color_code = colortemp;
+				$(this).css("background-color",colorcode);
+			  var color_code = colorcode;
 			  color_code = color_code + deci2hex(level);
 			  $("#light"+device_id).css("background-color",color_code);
 			}
