@@ -11,29 +11,29 @@ const colortemp3000 = "#ffb66b";
 const colortemp4000 = "#ffd1a1";
 const colortemp5000 = "#ffe9d6";
 const colortemp6000 = "#fff5f5";
-const inactive_ct = "#c6c6c699";
+const inactive_ct = "#e6e6e6";
 //System const & var
 var div = $("div")[0];
 const ip = "uni18.hexa.pro";
 const port = "20398";
 const PATH = "";
 //const ip = "13.124.195.114";
-//const port = "3000";
+//const port = "9000";
 //const PATH = "/gw/v1";
 const BASE_URL = "http://" + ip + ":" + port + PATH;
 
+const UNIT_DEVICE = "device";
 /***************
 UI Control CODE
 ***************/
 //init
-function init(){
-	//myRequest("/device/","GET",null,null);
+/*function init(){
   for(var i=4; i<=LIGHT_NUM; i++){
 		getStatus(i);
 		//saveData("light"+i,"off",colortemp4000+"ff",4000,100);
   }
 }
-init();
+init();*/
 
 //light UI event
 $("div .light").mouseenter(function(){
@@ -59,6 +59,7 @@ $("div .light").mouseenter(function(){
 		turnOnOff($(this).attr('id'),null);
 	});
 function turnOnOff(id,param){
+		console.log(id);
 		//var id = $(thi).attr('id');
 		var light_id = "#"+id;
 		var data = jQuery.data(div, id);
@@ -72,22 +73,23 @@ function turnOnOff(id,param){
 		
 		if(onoff == "off"){
 			var colorcode = colorcode.substring(0, 7);
-			colorcode = colorcode + deci2hex(level);
+			//colorcode = colorcode + deci2hex(level);
 			$(light_id).css("background-color",colorcode);
 			//$(light_id).css("opacity",level);
 			var colortemp = data.colortemp;
-			saveData(id,"on",colorcode,colortemp,level);
-			myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","on");
-			myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","level",level);
+			saveData(id,"on",colorcode,colortemp,level,UNIT_DEVICE);
+			myRequest("/device/"+data.id+"/light","PUT","onoff","on");
+			myRequest("/device/"+data.id+"/light","PUT","level",level);
 		}
 		else{
-			$(light_id).css("background-color",TRANSPAERENT);
+			//$(light_id).css("background-color",TRANSPAERENT);
+			$(light_id).css("background-color","#e7eaef");
 			var data = jQuery.data(div, id);
 			var colorcode = data.colorcode;
 			var colortemp = data.colortemp;
 			var level = data.level;
-			saveData(id,"off",colorcode,colortemp,level);
-			myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","off");
+			saveData(id,"off",colorcode,colortemp,level,UNIT_DEVICE);
+			myRequest("/device/"+data.id+"/light","PUT","onoff","off");
 		}
 }
 //Color Temp UI event
@@ -123,11 +125,12 @@ function Colortemp(id,ct,value){
 	var rgba = colorcode + deci2hex(level);
 	resetCtBtn();
 	$(ct).css("background-color",colorcode);
-	$(light_id).css("background-color",rgba);
-	saveData(id,"on",colorcode,colortemp,level);
+	//$(light_id).css("background-color",rgba);
+	$(light_id).css("background-color",colorcode);
+	saveData(id,"on",colorcode,colortemp,level,UNIT_DEVICE);
   if(data.onoff == "off")
-    myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","on");
-	myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","colortemp",value);
+    myRequest("/device/"+data.id+"/light","PUT","onoff","on");
+	myRequest("/device/"+data.id+"/light","PUT","colortemp",value);
 };
 
 //brightness UI event
@@ -141,13 +144,18 @@ function Brightness(event,id){
 	var data = jQuery.data(div,id);
 	var colortemp = data.colortemp;
 	var colorcode = data.colorcode.substring(0, 7);
-	colorcode = colorcode + deci2hex(level);
+	//colorcode = colorcode + deci2hex(level);
 	$(light_id).css("background-color",colorcode);
-	saveData(id,"on",colorcode,colortemp,level);
+	saveData(id,"on",colorcode,colortemp,level,UNIT_DEVICE);
 	if(data.onoff == "off")
-		myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","onoff","on");
-	myRequest("/device/"+id.substring(5,id.length)+"/light","PUT","level",Number(level));
+		myRequest("/device/"+data.id+"/light","PUT","onoff","on");
+	myRequest("/device/"+data.id+"/light","PUT","level",Number(level));
 }
+
+$("#discovery-btn").click(function(){
+	myRequest("/device","GET",null,null);
+	myRequest("/group","GET",null,null);
+})
 
 function rgb2hex(rgb){
  rgb = rgb.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
@@ -157,12 +165,16 @@ function rgb2hex(rgb){
   ("0" + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
 }
 
-function saveData(id,onoff,cc,ct,level){
-  jQuery.data(div,id,{
+function saveData(name,onoff,cc,ct,level,unit){
+	var id = name.replace("조명","");
+	id = id.replace("번","");
+  jQuery.data(div,name,{
+		id: id,
     onoff: onoff,
 		colorcode: cc,
     colortemp: ct,
-    level: level
+    level: level,
+		unit: unit
   });
 };
 
@@ -221,10 +233,6 @@ function resetCtBtn(){
 	}
 };
 
-function ListView(){
-	
-}
-
 /***************
 HTTP Method CODE
 ***************/
@@ -241,11 +249,13 @@ function myRequest(path,method,key,value){
 		contentType: "application/json",
     beforeSend: function(jqXHR) {},
     success: function(jqXHR) {
-			//alert("Success: "+bodyString);
 			response += jqXHR;
-			/*if(path == "/device/"){
-				ListView(JSON.parse(response));
-			}*/
+			//Discovery
+			if(path == "/device" || path == "/group"){
+				var unit = (path.split("/"))[1];
+				handleDiscovery(jqXHR,unit);
+			}
+			//voice command
 			if(path == "/command-analysis/") operation(response);
 		},
     error: function(jqXHR) {
@@ -259,25 +269,36 @@ function myRequest(path,method,key,value){
 function approxColortemp(colortemp){
 	return ((colortemp / 1000 | 0)*1000).toString();
 }
-function getStatus(device_id){
+function getStatus(device_id,unit,name){
+	if (name == undefined)
+		name = "조명"+device_id+"번";
+	var param = "/light";
+	if (unit == "group")
+		param = "/dstatus";
+	console.log(BASE_URL + "/"+unit+"/" + device_id + param);
   $.ajax({
-    url:  BASE_URL + "/device/"+device_id+"/light",
+    url:  BASE_URL + "/"+unit+"/" + device_id + param,
     type: "GET",
     contentType: "application/json",
     beforeSend: function(jqXHR) {},
-    success: function(jqXHR) {
+    success: function(jqXHR){
+			console.log(JSON.parse(jqXHR));
 			var r = JSON.parse(jqXHR).result_data;
+			if(unit == "group"){
+				r = r.group_list;
+				if(r == undefined) return;
+				r = r[0];
+			}
 			var onoff = r.onoff;
 			var colortemp = r.colortemp;
 			var colorcode = approxColortemp(colortemp);
 			colorcode = id2color("#ct"+colorcode);
 			var level = r.level;
-			saveData("light"+device_id,onoff,colorcode+"ff",colortemp,r.level);
-			if(onoff == "on"){
-				$(this).css("background-color",colorcode);
+			saveData(name,onoff,colorcode+"ff",colortemp,level,unit);
+			if(onoff == "on" && unit == "device"){
 			  var color_code = colorcode;
-			  color_code = color_code + deci2hex(level);
-			  $("#light"+device_id).css("background-color",color_code);
+			  //color_code = color_code + deci2hex(level);
+			  $("#"+name).css("background-color",color_code);
 			}
     },
     error: function(jqXHR) {
