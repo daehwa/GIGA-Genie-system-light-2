@@ -27,8 +27,6 @@ var namespaces = [ON,OFF,SET_BRI,IN_BRI,DE_BRI,SET_CT,IN_CT,DE_CT];
 const CASES = 8;
 var action = null;
 var name = "";
-var device = "light";
-var num = null;
 var value = null;
 
 
@@ -68,7 +66,9 @@ app.all('*', function (req, res, next) {
 			};
 			PythonShell.run('./html/sl2/command-analysis.py', options, function (err, results) {
   			if (err) throw err;
-
+				name ="";
+				value = null;
+				action = null;
 				var sen = Array();
   			for(var i=1; i<results.length; i++){
     			var word = results[i].split("(");
@@ -87,8 +87,6 @@ app.all('*', function (req, res, next) {
 
   			var json = {
       		action: action,
-      		device: device,
-      		num: num,
       		value: value,
       		friendlyName: name
     		};
@@ -119,8 +117,13 @@ function returnResponse(res,response){
     serverData += chunk;
   });
   response.on('end',function(){
-		var d = JSON.parse(serverData);
-    res.end(serverData);
+		try{
+			var d = JSON.parse(serverData);
+			res.end(serverData);
+		}
+		catch(e){
+			console.log("응답오류: invalid json");
+		}
   });
 }
 
@@ -170,17 +173,24 @@ function comprehendAction(sen){
       }
     })
   }
-  var index = oneHot.indexOf(Math.max.apply(null, oneHot)); // find highest possibility one.
-	console.log(oneHot);
-	if(index==3 || index==4)
-		value = 20;
-	else if(index==6 || index==7)
-		value = 1000;
-  action = namespaces[index];
 
-  for(i in sen){
-    getParam(sen[i].get("class"),sen[i]);
-  }
+	var MAX_VALUE = Math.max.apply(null, oneHot);
+	if(MAX_VALUE == 0){
+		action = "error";
+	}
+	else{
+		var index = oneHot.indexOf(MAX_VALUE); // find highest possibility one.
+		console.log(oneHot);
+		if(index==3 || index==4)
+			value = 20;
+		else if(index==6 || index==7)
+			value = 1000;
+		action = namespaces[index];
+
+		for(i in sen){
+		  getParam(sen[i].get("class"),sen[i]);
+	  }
+	}
 }
 
 function getParam(word_class,lang){
@@ -198,12 +208,14 @@ function getParam(word_class,lang){
 }
 
 function handleNP(lang){
-  var key = lang.search("Number");
-  if(key!=null){
-    if(lang.has("조명"))
-      num = key;
-    else{
-      value = key;
-    }
+  var k = lang.search("Number");
+	if(name==""){
+		lang.forEach(function(value,key){
+			if(key!="class")
+				name += key;
+		});
+	}
+  else if(k!=null){
+		value = k;
   }
 }
